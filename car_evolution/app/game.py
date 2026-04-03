@@ -26,17 +26,29 @@ class EvolutionGame:
     """
     Runs the full-screen simulation: track rendering, car updates, GA steps, and CSV logs.
 
-    Construct with optional custom :class:`~car_evolution.track.layout.RaceTrack` and config overrides.
+    Uses :data:`~car_evolution.config.settings.DISPLAY` and :data:`~car_evolution.config.settings.SIMULATION`
+    unless you subclass and override wiring.
     """
 
     def __init__(self, track: RaceTrack | None = None) -> None:
+        """
+        Args:
+            track: Layout to simulate; ``None`` uses :meth:`~car_evolution.track.layout.RaceTrack.default_hardcore`.
+
+        Also stores :class:`~car_evolution.evolution.schedule.EvolutionParameterSchedule` for generation milestones.
+        """
         self._track = track or RaceTrack.default_hardcore()
         self._display = DISPLAY
         self._sim = SIMULATION
         self._schedule = EvolutionParameterSchedule()
 
     def run(self) -> None:
-        """Initialize Pygame, execute the main loop until quit, then shut down."""
+        """
+        Create the window, load fonts and static track art, then run until quit.
+
+        Handles pygame events, car updates, generation boundaries, CSV logging via
+        :class:`~car_evolution.evolution.logger.EvolutionCSVLogger`, and ``pygame.quit`` on exit.
+        """
         d = self._display
         sim = self._sim
         track = self._track
@@ -83,7 +95,9 @@ class EvolutionGame:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+                    elif event.key == pygame.K_UP:
                         pop.mutation_rate = min(0.1, pop.mutation_rate + 0.01)
                     elif event.key == pygame.K_DOWN:
                         pop.mutation_rate = max(0.001, pop.mutation_rate - 0.01)
@@ -176,5 +190,5 @@ class EvolutionGame:
 
 
 def run() -> None:
-    """Entry helper: ``python -m car_evolution`` or ``run()`` from ``main``."""
+    """Convenience wrapper: instantiate :class:`EvolutionGame` with defaults and call :meth:`~EvolutionGame.run`."""
     EvolutionGame().run()

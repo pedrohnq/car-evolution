@@ -1,7 +1,7 @@
 """
 Launch the AI car evolution demo.
 
-Code lives in the ``car_evolution`` package. User-facing setup and architecture (Portuguese): README.md.
+Code lives in the ``car_evolution`` package. Setup, architecture, and behaviour: README.md.
 """
 
 from car_evolution import run

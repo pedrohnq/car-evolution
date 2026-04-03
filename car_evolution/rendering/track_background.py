@@ -18,10 +18,12 @@ from car_evolution.track.layout import RaceTrack
 
 
 def _poly_points(pts: Sequence[tuple[float, float]]) -> list[tuple[int, int]]:
+    """Convert float vertices to integer pixel tuples for pygame drawing APIs."""
     return [(int(p[0]), int(p[1])) for p in pts]
 
 
 def _draw_grass_stripes(surf: pygame.Surface, width: int, height: int) -> None:
+    """Fill ``surf`` with horizontal alternating light/dark green stripes (off-track look)."""
     stripe = 40
     for y in range(0, height, stripe):
         color = Colors.GRASS_LIGHT if (y // stripe) % 2 == 0 else Colors.GRASS_DARK
@@ -33,6 +35,11 @@ def _draw_zebra_polyline(
     pts: Sequence[tuple[float, float]],
     line_width: int,
 ) -> None:
+    """
+    Stroke a closed polyline with alternating red/white thick segments (curb effect).
+
+    Edge ``i`` connects vertex ``i`` to ``(i+1) % n``.
+    """
     n = len(pts)
     if n < 2:
         return
@@ -45,6 +52,7 @@ def _draw_zebra_polyline(
 
 
 def _draw_poly_outline(surf: pygame.Surface, pts: Sequence[tuple[float, float]], width: int) -> None:
+    """Draw only the polygon border in :attr:`~car_evolution.config.settings.Colors.TRACK_OUTLINE`."""
     ip = _poly_points(pts)
     if len(ip) < 2:
         return
@@ -59,6 +67,11 @@ def _draw_grandstand(
     h: int,
     rng: random.Random,
 ) -> None:
+    """
+    Draw a simple grandstand rectangle and scatter deterministic crowd dots (``rng``).
+
+    ``rng`` should be fixed per bake so the image does not flicker between frames.
+    """
     pygame.draw.rect(surf, Colors.GRANDSTAND_FACADE, (x, y, w, h), border_radius=3)
     pygame.draw.rect(surf, Colors.GRANDSTAND_FRAME, (x, y, w, h), 2, border_radius=3)
     crowd = [(220, 50, 50), (50, 100, 220), (255, 255, 255), (255, 180, 0)]
@@ -88,7 +101,12 @@ def _draw_start_grid(
     travel_angle: float,
     half_width: float = 56.0,
 ) -> None:
-    """Checkered boxes: ``travel_angle`` is along the track; width spans the corridor."""
+    """
+    Draw a small checkered pattern at the spawn (start/finish style).
+
+    ``travel_angle`` points along the racing line; the pattern extends perpendicular across
+    ``half_width`` pixels on each side. ``pos`` is the grid origin (spawn point).
+    """
     px, py = pos
     perp = travel_angle + math.pi / 2
     for step in range(int(-half_width), int(half_width), 10):
@@ -100,6 +118,12 @@ def _draw_start_grid(
 
 
 def _waypoint_tangents(waypoints: Sequence[tuple[float, float]]) -> list[float]:
+    """
+    For each waypoint, heading from previous to next along the closed loop (for direction arrows).
+
+    Returns:
+        List of ``atan2`` angles parallel to the local track direction, length ``len(waypoints)``.
+    """
     n = len(waypoints)
     angles: list[float] = []
     for i in range(n):

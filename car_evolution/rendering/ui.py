@@ -21,13 +21,26 @@ def draw_text(
     y: int,
     color: tuple[int, int, int] = Colors.TEXT,
 ) -> int:
-    """Blit one line; return next ``y`` below this line (spacing 5px)."""
+    """
+    Render and blit a single line of text.
+
+    Args:
+        screen: Destination surface (usually the full window).
+        font: Pygame font used for rendering.
+        text: UTF-8 string (no automatic wrapping).
+        x, y: Top-left pixel position.
+        color: RGB tuple.
+
+    Returns:
+        The y-coordinate just below this line, including a 5px gap for stacking.
+    """
     img = font.render(text, True, color)
     screen.blit(img, (x, y))
     return y + img.get_height() + 5
 
 
 def _text_width(font: pygame.font.Font, text: str) -> int:
+    """Pixel width of ``text`` when rendered with ``font`` (used for wrap decisions)."""
     return font.render(text, True, Colors.TEXT).get_width()
 
 
@@ -40,7 +53,14 @@ def draw_text_wrapped(
     max_width: int,
     color: tuple[int, int, int] = Colors.TEXT,
 ) -> int:
-    """One line, or two lines split at a space if wider than ``max_width``."""
+    """
+    Draw text on one or two lines so each fits within ``max_width``.
+
+    If the full string is too wide, splits once at the nearest space before the midpoint.
+
+    Returns:
+        The y-coordinate below the last rendered line (including spacing).
+    """
     if _text_width(font, text) <= max_width:
         return draw_text(screen, font, text, x, y, color)
     mid = len(text) // 2
@@ -60,7 +80,16 @@ def draw_track_arrow(
     angle_rad: float,
     size: float = 25,
 ) -> None:
-    """Draw a triangular arrow at ``center`` pointing along ``angle_rad``."""
+    """
+    Draw a filled triangle pointing in direction ``angle_rad`` (radians, standard math axes).
+
+    Args:
+        screen: Destination surface.
+        color: Fill RGB.
+        center: Arrow base center in screen coordinates.
+        angle_rad: Heading of the tip.
+        size: Distance from center to tip.
+    """
     p1 = (center[0] + math.cos(angle_rad) * size, center[1] + math.sin(angle_rad) * size)
     p2 = (center[0] + math.cos(angle_rad + 2.6) * size, center[1] + math.sin(angle_rad + 2.6) * size)
     p3 = (center[0] + math.cos(angle_rad - 2.6) * size, center[1] + math.sin(angle_rad - 2.6) * size)
@@ -80,12 +109,24 @@ class EvolutionDashboard:
         font_normal: pygame.font.Font,
         font_small: pygame.font.Font,
     ) -> None:
+        """
+        Args:
+            display: Window dimensions and track/UI split.
+            font_large: Section titles (e.g. GA DASHBOARD).
+            font_normal: Stats and parameter labels.
+            font_small: History lines and hotkey hints.
+        """
         self._display = display
         self._font_large = font_large
         self._font_normal = font_normal
         self._font_small = font_small
 
     def _footer_height(self) -> int:
+        """
+        Estimated vertical pixels reserved for PARAMETERS + CONTROLS at the panel bottom.
+
+        Includes a small safety margin so the last line is not clipped by the window.
+        """
         fl = self._font_large
         fn = self._font_normal
         fs = self._font_small
@@ -110,6 +151,23 @@ class EvolutionDashboard:
         victory_history: Sequence[tuple[int, int]],
         num_waypoints: int,
     ) -> None:
+        """
+        Paint the full sidebar: stats, history (middle, height-limited), footer parameters/controls.
+
+        Clips drawing to the panel interior so text cannot spill into the track. History rows are
+        truncated with a ``+N older`` line if they would overlap the footer band.
+
+        Args:
+            screen: Full window surface.
+            pop: Current genetic population (generation, rates, selection labels).
+            frame_counter: Frames elapsed in the current generation.
+            max_frames_per_generation: Used to show remaining time.
+            global_best_cp: Best checkpoint count achieved this session.
+            global_best_dist: Distance to next gate for that progress leader.
+            global_max_fitness: Peak fitness seen since session start.
+            victory_history: ``(generation_index, num_cars_finished)`` chronologically.
+            num_waypoints: Total gates on the track (for progress strings).
+        """
         d = self._display
         pad_l = 16
         pad_r = 12

@@ -55,13 +55,22 @@ class Car:
         self.sensor_lengths: list[float] = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     def progress_gates(self, n_seg: int) -> int:
-        """Effective gate count for progress display (full lap => ``n_seg``)."""
+        """
+        Returns:
+            ``n_seg`` if the lap is complete; otherwise ``checkpoints_cleared``.
+        """
         if self.finished:
             return n_seg
         return self.checkpoints_cleared
 
     def dist_to_next_gate(self, waypoint_centers: Sequence[tg.Point]) -> float:
-        """Euclidean distance to the current target waypoint; 0 if finished or past last."""
+        """
+        Args:
+            waypoint_centers: Gate centers in lap order.
+
+        Returns:
+            Euclidean distance to ``waypoint_centers[target_wp]``, or ``0.0`` if done or invalid index.
+        """
         n = len(waypoint_centers)
         if self.finished or self.target_wp >= n:
             return 0.0
@@ -69,7 +78,12 @@ class Car:
         return math.hypot(self.x - cx, self.y - cy)
 
     def _compute_fitness(self, waypoint_centers: Sequence[tg.Point]) -> float:
-        """Fitness from checkpoints plus a small tie-breaker from distance to next gate."""
+        """
+        Scalar fitness: checkpoint bonuses, lap completion bonus, or distance tie-breaker.
+
+        Returns:
+            Larger is better; finished cars receive ``TRACK_COMPLETE_BONUS`` plus per-gate score.
+        """
         n_seg = len(waypoint_centers)
         if self.finished:
             return float(n_seg * self.SEGMENT_BONUS + self.TRACK_COMPLETE_BONUS)
@@ -181,7 +195,11 @@ class Car:
             self.check_collision(track_lines)
 
     def read_sensors(self, track_lines: Sequence[tg.Segment]) -> None:
-        """Cast five rays and store normalized distances in ``self.sensor_lengths``."""
+        """
+        Cast five rays (relative to ``self.angle``) and fill ``self.sensor_lengths``.
+
+        Each value is in ``[0, 1]``, the hit distance along the ray divided by ``200`` (max range).
+        """
         angles = [-math.pi / 2, -math.pi / 4, 0, math.pi / 4, math.pi / 2]
         self.sensor_lengths = []
         max_dist = 200
@@ -201,7 +219,9 @@ class Car:
             self.sensor_lengths.append(closest_dist / max_dist)
 
     def check_collision(self, track_lines: Sequence[tg.Segment]) -> None:
-        """Kill the car if the body is too close to any wall segment."""
+        """
+        If the car center is within ``10`` pixels of any wall segment, set ``alive`` to ``False``.
+        """
         for line in track_lines:
             if self.point_line_distance(self.x, self.y, line[0], line[1]) < 10:
                 self.alive = False
@@ -218,10 +238,16 @@ class Car:
         ray_y: float = 0.0,
     ) -> float | None:
         """
-        Distance from ``(px, py)`` to segment ``p1``-``p2``, or ray-segment hit distance.
+        Point-to-segment distance, or raycast intersection distance for sensors.
 
         Args:
-            is_raycast: If True, measure along the ray from ``(px, py)`` to ``(ray_x, ray_y)``.
+            px, py: Query point (car center or ray origin).
+            p1, p2: Wall segment endpoints.
+            is_raycast: If ``True``, only count intersections strictly between ray origin and ``(ray_x, ray_y)``.
+            ray_x, ray_y: Ray tip when ``is_raycast`` is ``True`` (ignored otherwise).
+
+        Returns:
+            Shortest distance in pixels, or ``None`` when ray mode finds no proper intersection.
         """
         if is_raycast:
             x1, y1 = px, py
@@ -252,7 +278,12 @@ class Car:
         return math.hypot(px - ix, py - iy)
 
     def draw(self, screen: Any) -> None:
-        """Small kart: green while driving, red when dead, cyan when lap complete."""
+        """
+        Draw shadow, body, nose, and cockpit dot (requires an active pygame display).
+
+        Args:
+            screen: ``pygame.Surface`` for the main window.
+        """
         import pygame
 
         ix, iy = int(self.x), int(self.y)

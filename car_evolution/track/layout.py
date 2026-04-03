@@ -14,10 +14,10 @@ from . import geometry as tg
 @dataclass(frozen=True)
 class RaceTrack:
     """
-    Immutable track layout: polygon boundaries, line segments, checkpoints, and spawn pose.
+    Immutable track layout: polygon boundaries, waypoints, checkpoints, and spawn pose.
 
-    ``collision_geometry`` matches the dict previously built inline in ``main`` for
-    :class:`~car_evolution.core.car.Car`.
+    ``outer_points`` / ``inner_points`` define the drivable ring. ``waypoints`` order the
+    checkpoint gates. :meth:`collision_geometry` is passed into :class:`~car_evolution.core.car.Car`.
     """
 
     outer_points: tuple[tg.Point, ...]
@@ -65,7 +65,12 @@ class RaceTrack:
 
     @classmethod
     def default_hardcore(cls) -> RaceTrack:
-        """Original bundled track: hardcore layout and 16 gates."""
+        """
+        Built-in challenging loop: 12 outer vertices, 11 inner, 16 waypoints, fixed spawn.
+
+        Returns:
+            A frozen :class:`RaceTrack` used by :class:`~car_evolution.app.game.EvolutionGame` by default.
+        """
         outer_points = (
             (1000, 100),
             (200, 100),

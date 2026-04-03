@@ -42,11 +42,19 @@ class Population:
         ]
 
     def all_inactive(self) -> bool:
-        """True when every car is either dead or finished the lap."""
+        """
+        Returns:
+            ``True`` if no car is both alive and still racing (dead or ``finished``).
+        """
         return all((not c.alive) or c.finished for c in self.cars)
 
     def evolve(self) -> None:
-        """Produce the next generation in place and increment ``generation``."""
+        """
+        Sort by ``best_fitness``, keep ``elitism`` clones, fill the rest with offspring.
+
+        Offspring DNA comes from ``select_parent`` pairs, ``crossover`` / clone, and ``mutate``.
+        Replaces ``self.cars`` and increments ``self.generation``.
+        """
         self.cars.sort(key=lambda x: x.best_fitness, reverse=True)
         new_cars: list[Car] = []
 
@@ -73,7 +81,15 @@ class Population:
         self.generation += 1
 
     def select_parent(self) -> Car:
-        """Pick one parent using tournament (k=3) or fitness-proportionate roulette."""
+        """
+        Choose one car for reproduction.
+
+        Tournament: sample three cars, return the best by ``best_fitness``.
+        Roulette: probability proportional to ``max(0, best_fitness)`` (with epsilon).
+
+        Returns:
+            A reference to a car already in ``self.cars`` (not a copy).
+        """
         if self.selection_method == "Tournament":
             tournament = random.sample(self.cars, 3)
             return max(tournament, key=lambda x: x.best_fitness)
@@ -90,7 +106,12 @@ class Population:
         return self.cars[-1]
 
     def crossover(self, dna1: np.ndarray, dna2: np.ndarray) -> np.ndarray:
-        """Uniform bitwise mask or one-point splice, depending on ``crossover_method``."""
+        """
+        Combine two flat weight vectors into one child vector.
+
+        ``Uniform``: per-gene random choice between parents.
+        ``One-Point``: prefix from ``dna1`` and suffix from ``dna2`` at a random cut.
+        """
         if self.crossover_method == "Uniform":
             mask = np.random.rand(len(dna1)) > 0.5
             return np.where(mask, dna1, dna2)
@@ -98,7 +119,14 @@ class Population:
         return np.concatenate((dna1[:pt], dna2[pt:]))
 
     def mutate(self, dna: np.ndarray) -> np.ndarray:
-        """Gaussian perturbation on a fraction of genes controlled by ``mutation_rate``."""
+        """
+        Add Gaussian noise to a random subset of genes.
+
+        Each index is mutated independently with probability ``mutation_rate``; noise scale is fixed.
+
+        Returns:
+            A new float64 array (input is not modified in place).
+        """
         dna = np.asarray(dna, dtype=np.float64).copy()
         rate = self.mutation_rate
         scale = 0.55

@@ -18,7 +18,7 @@ class EvolutionCSVLogger:
     def __init__(self, log_path: Path) -> None:
         """
         Args:
-            log_path: Destination CSV file (parent directory should exist — use
+            log_path: Destination CSV file (parent directory should exist - use
                 :func:`car_evolution.io.paths.ensure_logs_dir`).
         """
         self._path = log_path

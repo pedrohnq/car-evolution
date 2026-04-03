@@ -9,7 +9,15 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class DisplayConfig:
-    """Pygame window and layout sizes."""
+    """
+    Pygame window geometry.
+
+    Attributes:
+        track_width: Pixels for the racing view (left pane).
+        ui_width: Pixels for the GA dashboard (right pane).
+        height: Window height in pixels.
+        fps: Target frames per second for :meth:`pygame.time.Clock.tick`.
+    """
 
     track_width: int = 1200
     ui_width: int = 420
@@ -24,7 +32,14 @@ class DisplayConfig:
 
 @dataclass(frozen=True)
 class SimulationConfig:
-    """Evolution timing and reproducibility."""
+    """
+    Core simulation and GA sizing.
+
+    Attributes:
+        default_seed: Initial RNG seed for reproducible first runs (``R`` key restores it).
+        population_size: Number of :class:`~car_evolution.core.car.Car` instances per generation.
+        max_frames_per_generation: Force evolution after this many frames if cars still run.
+    """
 
     default_seed: int = 42
     population_size: int = 40
@@ -33,7 +48,14 @@ class SimulationConfig:
 
 @dataclass(frozen=True)
 class DebugConfig:
-    """Developer toggles (unused hooks kept for future debugging)."""
+    """
+    Optional developer switches (reserved for future visualization hooks).
+
+    Attributes:
+        show_checkpoint_debug: Placeholder for drawing gate geometry in-game.
+        debug_evolution: Placeholder for verbose GA logging.
+        debug_progress_every_n_frames: Placeholder for throttled debug prints.
+    """
 
     show_checkpoint_debug: bool = False
     debug_evolution: bool = True
@@ -41,7 +63,12 @@ class DebugConfig:
 
 
 class Colors:
-    """RGB tuples for the UI panel, track rendering, and car states."""
+    """
+    Shared RGB ``(R, G, B)`` constants for pygame drawing.
+
+    Grouped conceptually: dashboard text, track backdrop, and car accents (body uses ``GREEN`` /
+    ``RED`` / ``CYAN`` from car state).
+    """
 
     # --- UI panel ---
     WHITE = (255, 255, 255)

@@ -17,10 +17,17 @@ class EvolutionParameterSchedule:
 
     def apply(self, pop: Population) -> None:
         """
-        Update ``pop`` fields according to the current ``pop.generation``.
+        Mutate ``pop.mutation_rate``, ``crossover_rate``, ``selection_method``, and/or
+        ``crossover_method`` when ``pop.generation`` hits configured milestones.
+
+        Safe to call every generation end; no-op on generations without rules.
 
         Args:
-            pop: Population whose generation index drives the schedule.
+            pop: Active population (modified in place).
+
+        Note:
+            Call **before** :meth:`~car_evolution.core.population.Population.evolve` so the logged row
+            matches the generation that just finished.
         """
         g = pop.generation
 
