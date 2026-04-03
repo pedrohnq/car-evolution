@@ -1,0 +1,82 @@
+"""
+Central configuration: window layout, timing, debug flags, and color palette.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class DisplayConfig:
+    """Pygame window and layout sizes."""
+
+    track_width: int = 1200
+    ui_width: int = 420
+    height: int = 800
+    fps: int = 60
+
+    @property
+    def width(self) -> int:
+        """Total window width (track + UI panel)."""
+        return self.track_width + self.ui_width
+
+
+@dataclass(frozen=True)
+class SimulationConfig:
+    """Evolution timing and reproducibility."""
+
+    default_seed: int = 42
+    population_size: int = 40
+    max_frames_per_generation: int = 600
+
+
+@dataclass(frozen=True)
+class DebugConfig:
+    """Developer toggles (unused hooks kept for future debugging)."""
+
+    show_checkpoint_debug: bool = False
+    debug_evolution: bool = True
+    debug_progress_every_n_frames: int = 60
+
+
+class Colors:
+    """RGB tuples for the UI panel, track rendering, and car states."""
+
+    # --- UI panel ---
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    GRAY = (150, 150, 150)
+    DARK_GRAY = (30, 30, 30)
+    PANEL_BG = (15, 15, 15)
+    GREEN = (0, 255, 0)
+    RED = (255, 50, 50)
+    CYAN = (0, 255, 255)
+    ORANGE = (255, 165, 0)
+    YELLOW = (255, 200, 0)
+    PURPLE = (200, 0, 255)
+    TEXT = (220, 220, 220)
+    HIGHLIGHT = (70, 130, 180)
+    UI_SECTION_DIVIDER = (50, 50, 50)
+
+    # --- Track (grass, asphalt, curbs) ---
+    GRASS_LIGHT = (34, 139, 34)
+    GRASS_DARK = (28, 115, 28)
+    ASPHALT = (60, 60, 65)
+    TRACK_OUTLINE = (25, 25, 25)
+    ZEBRA_RED = (200, 30, 30)
+    ZEBRA_WHITE = (240, 240, 240)
+    PIT_LINE = (255, 200, 0)
+    ARROW_MUTED = (100, 100, 105)
+    GRANDSTAND_FACADE = (140, 140, 145)
+    GRANDSTAND_FRAME = (60, 60, 60)
+
+    # --- Car sprite (body uses GREEN / RED / CYAN from states above) ---
+    CAR_SHADOW = (15, 50, 15)
+    CAR_NOSE = (25, 25, 25)
+
+
+# Default singletons used by the game loop
+DISPLAY = DisplayConfig()
+SIMULATION = SimulationConfig()
+DEBUG = DebugConfig()
