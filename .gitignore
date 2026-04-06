@@ -68,6 +68,3 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Especifico do Projeto
-*.csv
