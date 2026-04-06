@@ -43,6 +43,15 @@ def default_run_presets() -> list[EvolutionRunParams]:
     """
     return [
         EvolutionRunParams(
+            population_size=80,
+            mutation_rate=0.05,
+            crossover_rate=0.80,
+            elitism=2,
+            selection_method="Tournament",
+            crossover_method="Uniform",
+            label="Pop80 - Elitism 2",
+        ),
+        EvolutionRunParams(
             population_size=40,
             mutation_rate=0.05,
             crossover_rate=0.80,
