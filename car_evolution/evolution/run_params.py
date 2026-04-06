@@ -16,6 +16,7 @@ class EvolutionRunParams:
     GA settings held constant for one run (until plateau or generation cap).
 
     Attributes:
+        population_size: Number of cars per generation for this run.
         mutation_rate: Per-gene mutation probability in :meth:`~car_evolution.core.population.Population.mutate`.
         crossover_rate: Probability of two-parent crossover vs cloning one parent.
         elitism: Number of top individuals copied unchanged each generation.
@@ -24,6 +25,7 @@ class EvolutionRunParams:
         label: Short name for the dashboard (not logged to CSV).
     """
 
+    population_size: int
     mutation_rate: float
     crossover_rate: float
     elitism: int
@@ -41,6 +43,7 @@ def default_run_presets() -> list[EvolutionRunParams]:
     """
     return [
         EvolutionRunParams(
+            population_size=40,
             mutation_rate=0.05,
             crossover_rate=0.80,
             elitism=2,
@@ -49,6 +52,7 @@ def default_run_presets() -> list[EvolutionRunParams]:
             label="Baseline",
         ),
         EvolutionRunParams(
+            population_size=40,
             mutation_rate=0.12,
             crossover_rate=0.80,
             elitism=2,
@@ -57,6 +61,7 @@ def default_run_presets() -> list[EvolutionRunParams]:
             label="High mutation + Roulette",
         ),
         EvolutionRunParams(
+            population_size=40,
             mutation_rate=0.05,
             crossover_rate=0.90,
             elitism=2,
@@ -65,6 +70,7 @@ def default_run_presets() -> list[EvolutionRunParams]:
             label="High crossover",
         ),
         EvolutionRunParams(
+            population_size=40,
             mutation_rate=0.02,
             crossover_rate=0.90,
             elitism=2,
@@ -73,6 +79,7 @@ def default_run_presets() -> list[EvolutionRunParams]:
             label="Low mutation",
         ),
         EvolutionRunParams(
+            population_size=40,
             mutation_rate=0.05,
             crossover_rate=0.85,
             elitism=2,
@@ -81,6 +88,7 @@ def default_run_presets() -> list[EvolutionRunParams]:
             label="One-point crossover",
         ),
         EvolutionRunParams(
+            population_size=40,
             mutation_rate=0.15,
             crossover_rate=0.80,
             elitism=2,

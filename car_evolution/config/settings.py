@@ -37,7 +37,6 @@ class SimulationConfig:
 
     Attributes:
         default_seed: Initial RNG seed for reproducible first runs (``R`` key restores it).
-        population_size: Number of :class:`~car_evolution.core.car.Car` instances per generation.
         max_frames_per_generation: Force evolution after this many frames if cars still run.
         convergence_plateau_generations: End a parameter run after this many generations without
             improving session peak fitness.
@@ -45,7 +44,6 @@ class SimulationConfig:
     """
 
     default_seed: int = 42
-    population_size: int = 40
     max_frames_per_generation: int = 600
     convergence_plateau_generations: int = 50
     max_generations_per_run: int = 500

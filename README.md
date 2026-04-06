@@ -128,7 +128,7 @@ Constants live on `Car`: `SEGMENT_BONUS`, `TRACK_COMPLETE_BONUS`, `MAX_FRAMES_WI
 
 ## Genetic algorithm defaults
 
-Defined in `Population.__init__` (`core/population.py`):
+Fleet size is **not** in `SimulationConfig`: the pygame app passes `EvolutionRunParams.population_size` into `Population(...)`. Other defaults below apply when constructing a `Population` without overrides:
 
 | Setting | Default | Notes |
 |---------|---------|--------|
@@ -144,7 +144,7 @@ Defined in `Population.__init__` (`core/population.py`):
 
 `evolution/run_params.py` defines an ordered list of `EvolutionRunParams` presets (`default_run_presets()`). The game runs them **one after another**:
 
-- Within a preset, **mutation rate**, **crossover rate**, **selection**, and **crossover type** stay constant.
+- Within a preset, **population size**, **mutation rate**, **crossover rate**, **selection**, and **crossover type** stay constant.
 - A run ends when **either** the session peak fitness does not improve for `convergence_plateau_generations` **or** the generation index reaches `max_generations_per_run` (both in `SimulationConfig` in `config/settings.py`).
 - Then a **new** CSV file is opened, the RNG is re-seeded with the same base seed (fair comparison across presets), and a fresh population starts with the next preset.
 
@@ -212,7 +212,8 @@ project root/
 Edit **`car_evolution/config/settings.py`**:
 
 - **`DisplayConfig`** – `track_width`, `ui_width`, `height`, `fps`  
-- **`SimulationConfig`** – `default_seed`, `population_size`, `max_frames_per_generation`  
+- **`SimulationConfig`** – `default_seed`, `max_frames_per_generation`, convergence caps  
+- **`EvolutionRunParams`** (in `evolution/run_params.py`) – per-run `population_size` and GA hyperparameters  
 - **`DebugConfig`** – Reserved flags for future debug tooling  
 - **`Colors`** – UI, track theme, car accents  
 

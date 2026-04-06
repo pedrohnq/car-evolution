@@ -44,6 +44,38 @@ def _text_width(font: pygame.font.Font, text: str) -> int:
     return font.render(text, True, Colors.TEXT).get_width()
 
 
+def word_wrap_lines(text: str, font: pygame.font.Font, max_width: int) -> list[str]:
+    """
+    Break ``text`` into lines that fit ``max_width`` when rendered with ``font`` (word boundaries).
+
+    Single tokens wider than ``max_width`` are kept as one line (may clip horizontally).
+    """
+    text = text.strip()
+    if not text:
+        return []
+    words = text.split()
+    lines: list[str] = []
+    current = words[0]
+    for w in words[1:]:
+        trial = f"{current} {w}"
+        if font.render(trial, True, Colors.TEXT).get_width() <= max_width:
+            current = trial
+        else:
+            lines.append(current)
+            current = w
+    lines.append(current)
+    return lines
+
+
+def wrapped_text_height(font: pygame.font.Font, text: str, max_width: int, line_gap: int = 5) -> int:
+    """Vertical pixels needed to draw ``text`` wrapped at ``max_width`` (including gaps between lines)."""
+    lines = word_wrap_lines(text, font, max_width)
+    if not lines:
+        return 0
+    h = font.get_height()
+    return len(lines) * (h + line_gap)
+
+
 def draw_text_wrapped(
     screen: pygame.Surface,
     font: pygame.font.Font,
@@ -54,23 +86,14 @@ def draw_text_wrapped(
     color: tuple[int, int, int] = Colors.TEXT,
 ) -> int:
     """
-    Draw text on one or two lines so each fits within ``max_width``.
-
-    If the full string is too wide, splits once at the nearest space before the midpoint.
+    Draw ``text`` wrapped to ``max_width`` using word boundaries (any number of lines).
 
     Returns:
         The y-coordinate below the last rendered line (including spacing).
     """
-    if _text_width(font, text) <= max_width:
-        return draw_text(screen, font, text, x, y, color)
-    mid = len(text) // 2
-    split = text.rfind(" ", 0, min(len(text), mid + 15))
-    if split <= 0:
-        split = text.find(" ")
-    if split <= 0:
-        return draw_text(screen, font, text, x, y, color)
-    y = draw_text(screen, font, text[:split], x, y, color)
-    return draw_text(screen, font, text[split + 1 :].strip(), x, y, color)
+    for line in word_wrap_lines(text, font, max_width):
+        y = draw_text(screen, font, line, x, y, color)
+    return y
 
 
 def draw_track_arrow(
@@ -121,23 +144,36 @@ class EvolutionDashboard:
         self._font_normal = font_normal
         self._font_small = font_small
 
-    def _footer_height(self) -> int:
+    def _footer_height(self, text_max_w: int, pop: Population) -> int:
         """
-        Estimated vertical pixels reserved for PARAMETERS + CONTROLS at the panel bottom.
+        Vertical space reserved for PARAMETERS + CONTROLS so the middle HISTORY band stops in time.
 
-        Includes a small safety margin so the last line is not clipped by the window.
+        Uses the same wrapping rules as :meth:`draw` so tall footers (long control hints) are not clipped.
         """
         fl = self._font_large
         fn = self._font_normal
         fs = self._font_small
         gap = 5
+        line_fn = fn.get_height() + gap
+        line_fs = fs.get_height() + gap
         h = 0
         h += fl.get_height() + gap + 8 + gap
-        h += (fn.get_height() + gap) * 3
+        h += line_fn * 2
+        h += wrapped_text_height(fn, f"Selection: {pop.selection_method}", text_max_w, gap)
+        h += wrapped_text_height(
+            fn, f"Crossover type: {pop.crossover_method}", text_max_w, gap
+        )
         h += 12
         h += fl.get_height() + gap + 8 + gap
-        h += (fs.get_height() + gap) * 3
-        return h + 18  # safety margin so the last control line is not clipped
+        control_hints = (
+            "Each run uses fixed GA params until plateau or gen cap.",
+            "[R] Restart this run (same seed)",
+            "[N] New seed, restart this run",
+            "[ESC] Quit",
+        )
+        for hint in control_hints:
+            h += wrapped_text_height(fs, hint, text_max_w, gap)
+        return h + 24
 
     def draw(
         self,
@@ -201,7 +237,7 @@ class EvolutionDashboard:
         fl, fn, fs = self._font_large, self._font_normal, self._font_small
         line_fs = fs.get_height() + 5
 
-        footer_h = self._footer_height()
+        footer_h = self._footer_height(text_max_w, pop)
         y_footer = d.height - bottom_margin - footer_h
         gap_above_footer = 12
         y_hist_hard_stop = y_footer - gap_above_footer
@@ -217,23 +253,33 @@ class EvolutionDashboard:
         finished = sum(1 for c in pop.cars if c.finished)
 
         run_disp = run_index + 1
-        y = draw_text(
+        y = draw_text_wrapped(
             screen,
             fn,
             f"Parameter run: {run_disp}/{total_runs} — {run_label}",
             px,
             y,
+            text_max_w,
             Colors.ORANGE,
         )
         if all_runs_complete:
-            y = draw_text(screen, fn, "All runs finished (ESC to quit)", px, y, Colors.GREEN)
-        y = draw_text(
+            y = draw_text_wrapped(
+                screen,
+                fn,
+                "All runs finished (ESC to quit)",
+                px,
+                y,
+                text_max_w,
+                Colors.GREEN,
+            )
+        y = draw_text_wrapped(
             screen,
             fs,
             f"Convergence: no fitness gain {gens_without_improvement}/{plateau_generations} gens "
             f"(cap {max_generations_per_run} gens/run)",
             px,
             y,
+            text_max_w,
             Colors.GRAY,
         )
 
@@ -313,6 +359,15 @@ class EvolutionDashboard:
             screen,
             fn,
             f"Selection: {pop.selection_method}",
+            px,
+            yf,
+            text_max_w,
+            Colors.CYAN,
+        )
+        yf = draw_text_wrapped(
+            screen,
+            fn,
+            f"Crossover type: {pop.crossover_method}",
             px,
             yf,
             text_max_w,

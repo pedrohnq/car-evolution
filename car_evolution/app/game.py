@@ -54,7 +54,7 @@ class EvolutionGame:
         start_angle: float,
     ) -> Population:
         return Population(
-            size=self._sim.population_size,
+            size=params.population_size,
             start_pos=start_pos,
             start_angle=start_angle,
             mutation_rate=params.mutation_rate,
