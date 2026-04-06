@@ -6,7 +6,7 @@ folder as ``main.py``). It is derived from this file's location: ``io/`` -> pare
 ``car_evolution/`` -> its parent is the repository root.
 
 ``LOGS_DIR`` is always ``PROJECT_ROOT / "logs"``. :func:`ensure_logs_dir` creates it.
-Each run typically writes one timestamped CSV via :func:`evolution_log_path`.
+The game app writes one CSV per parameter run via :func:`evolution_run_log_path` (shared session timestamp). :func:`evolution_log_path` is still available for a single-file session if you build a custom loop.
 """
 
 from __future__ import annotations
@@ -57,3 +57,19 @@ def evolution_log_path(timestamp: datetime | None = None) -> Path:
     """
     ensure_logs_dir()
     return LOGS_DIR / evolution_log_filename(timestamp)
+
+
+def evolution_run_log_path(session_timestamp: datetime, run_index: int) -> Path:
+    """
+    CSV path for one fixed-parameter run within a multi-run session.
+
+    Args:
+        session_timestamp: Shared instant for all runs in the same app session (one window open).
+        run_index: Zero-based index among presets for this session.
+
+    Returns:
+        Path like ``logs/evolution_log_YYYYMMDD_HHMMSS_run01.csv``.
+    """
+    ensure_logs_dir()
+    ts = session_timestamp.strftime("%Y%m%d_%H%M%S")
+    return LOGS_DIR / f"evolution_log_{ts}_run{run_index + 1:02d}.csv"

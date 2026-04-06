@@ -136,7 +136,7 @@ class EvolutionDashboard:
         h += (fn.get_height() + gap) * 3
         h += 12
         h += fl.get_height() + gap + 8 + gap
-        h += (fs.get_height() + gap) * 6
+        h += (fs.get_height() + gap) * 3
         return h + 18  # safety margin so the last control line is not clipped
 
     def draw(
@@ -150,6 +150,14 @@ class EvolutionDashboard:
         global_max_fitness: float,
         victory_history: Sequence[tuple[int, int]],
         num_waypoints: int,
+        *,
+        run_index: int = 0,
+        total_runs: int = 1,
+        run_label: str = "",
+        all_runs_complete: bool = False,
+        gens_without_improvement: int = 0,
+        plateau_generations: int = 50,
+        max_generations_per_run: int = 500,
     ) -> None:
         """
         Paint the full sidebar: stats, history (middle, height-limited), footer parameters/controls.
@@ -207,6 +215,27 @@ class EvolutionDashboard:
         time_left = max(0, (max_frames_per_generation - frame_counter) // 60)
         driving = sum(1 for c in pop.cars if c.alive and not c.finished)
         finished = sum(1 for c in pop.cars if c.finished)
+
+        run_disp = run_index + 1
+        y = draw_text(
+            screen,
+            fn,
+            f"Parameter run: {run_disp}/{total_runs} — {run_label}",
+            px,
+            y,
+            Colors.ORANGE,
+        )
+        if all_runs_complete:
+            y = draw_text(screen, fn, "All runs finished (ESC to quit)", px, y, Colors.GREEN)
+        y = draw_text(
+            screen,
+            fs,
+            f"Convergence: no fitness gain {gens_without_improvement}/{plateau_generations} gens "
+            f"(cap {max_generations_per_run} gens/run)",
+            px,
+            y,
+            Colors.GRAY,
+        )
 
         y = draw_text(screen, fn, f"Generation: {pop.generation}", px, y)
         y = draw_text(screen, fn, f"Driving: {driving} / {pop.size}", px, y)
@@ -294,12 +323,10 @@ class EvolutionDashboard:
         pygame.draw.line(screen, Colors.UI_SECTION_DIVIDER, (px, yf), (right_x, yf), 1)
         yf += 8
         for key in (
-            "[UP/DN] Mutation",
-            "[L/R] Crossover",
-            "[S] Selection",
-            "[C] Crossover type",
-            "[R] Restart (same seed)",
-            "[N] New seed",
+            "Each run uses fixed GA params until plateau or gen cap.",
+            "[R] Restart this run (same seed)",
+            "[N] New seed, restart this run",
+            "[ESC] Quit",
         ):
             yf = draw_text_wrapped(screen, fs, key, px, yf, text_max_w, Colors.TEXT)
 

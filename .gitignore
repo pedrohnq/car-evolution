@@ -70,5 +70,4 @@ ehthumbs.db
 Thumbs.db
 
 # Especifico do Projeto
-logs/
 *.csv

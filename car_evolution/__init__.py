@@ -7,7 +7,7 @@ Package layout:
 - ``car_evolution.core`` - Car agent, feed-forward network, population, RNG seeding.
 - ``car_evolution.track`` - Polygon geometry, checkpoints, and :class:`~car_evolution.track.layout.RaceTrack`.
 - ``car_evolution.rendering`` - Pygame HUD, static track backdrop, text helpers.
-- ``car_evolution.evolution`` - Per-generation CSV logging and milestone schedules.
+- ``car_evolution.evolution`` - Per-generation CSV logging and fixed-parameter run presets.
 - ``car_evolution.io`` - Resolved project root and log paths under ``logs/``.
 - ``car_evolution.app`` - :class:`~car_evolution.app.game.EvolutionGame` main loop.
 

@@ -16,7 +16,7 @@ A 2D top-down simulation where a fleet of cars learns to drive a polygon track u
 6. [Fitness and rewards](#fitness-and-rewards)  
 7. [Neural network and car physics](#neural-network-and-car-physics)  
 8. [Genetic algorithm defaults](#genetic-algorithm-defaults)  
-9. [Automatic schedule (generations)](#automatic-schedule-generations)  
+9. [Sequential parameter runs](#sequential-parameter-runs)  
 10. [When a generation ends](#when-a-generation-ends)  
 11. [Directory structure](#directory-structure)  
 12. [Paths and CSV logging](#paths-and-csv-logging)  
@@ -74,15 +74,11 @@ The window shows the **track on the left** and the **GA dashboard on the right**
 
 | Input | Action |
 |--------|--------|
-| **↑ / ↓** | Increase / decrease **mutation rate** (clamped to `0.001` … `0.1`) |
-| **← / →** | Decrease / increase **crossover rate** (clamped to `0.6` … `1.0`) |
-| **S** | Toggle **selection**: `Tournament` ↔ `Roulette` |
-| **C** | Toggle **crossover**: `Uniform` ↔ `One-Point` |
-| **R** | Restart: same **RNG seed**, new population, reset session stats and history |
-| **N** | New random seed (`1` … `999_999`), then same as **R** |
+| **R** | Restart the **current** parameter run: same **RNG seed**, new population, reset run stats and history (hyperparameters stay fixed for that run). |
+| **N** | New random seed (`1` … `999_999`), then same as **R** for the current run. |
 | **Esc** | Quit (same as closing the window) |
 
-CSV rows already written for the session **remain on disk**; only RAM state is cleared on **R** / **N**.
+GA rates and methods are **fixed for each parameter run** until convergence; they are not changed with hotkeys. CSV files already written **remain on disk**; only RAM state is cleared on **R** / **N**.
 
 ---
 
@@ -100,7 +96,7 @@ CSV rows already written for the session **remain on disk**; only RAM state is c
 
 2. **Each frame** – Every car reads five ray sensors, runs its neural net, updates speed/heading/position, may clear the next gate, updates fitness, and can die (wall proximity, too long without a gate, or wrong-way rule on the first straight).
 
-3. **End of generation** – If all cars are inactive **or** the frame budget is reached, the schedule may tweak rates, one CSV row is appended, then `Population.evolve()` builds the next generation.
+3. **End of generation** – If all cars are inactive **or** the frame budget is reached, one CSV row is appended, then either the run **converges** (fitness plateau or generation cap) and the app advances to the next fixed-parameter preset, or `Population.evolve()` builds the next generation with the **same** hyperparameters.
 
 4. **Rendering** – The grassy/asphalt/curb backdrop is **baked once** (`rendering/track_background.py`) and blitted each frame; it does not affect physics.
 
@@ -144,23 +140,15 @@ Defined in `Population.__init__` (`core/population.py`):
 
 ---
 
-## Automatic schedule (generations)
+## Sequential parameter runs
 
-`evolution/schedule.py` adjusts hyperparameters at fixed **generation indices** (after that generation’s run, **before** `evolve()` increments the counter). Summary:
+`evolution/run_params.py` defines an ordered list of `EvolutionRunParams` presets (`default_run_presets()`). The game runs them **one after another**:
 
-| Generation | Typical effect |
-|------------|----------------|
-| 15 | Higher mutation, Roulette |
-| 30 | Reset mutation, higher crossover, Tournament |
-| 45 | Lower mutation |
-| 50 | Mutation bump, Tournament |
-| 120 | Lower mutation/crossover tweak, One-Point crossover |
-| 200 | High mutation, Roulette |
-| 250 | Moderate mutation, Tournament, Uniform crossover |
-| 350 | Very low mutation, high crossover |
-| 450 | Crossover rate `1.0` |
+- Within a preset, **mutation rate**, **crossover rate**, **selection**, and **crossover type** stay constant.
+- A run ends when **either** the session peak fitness does not improve for `convergence_plateau_generations` **or** the generation index reaches `max_generations_per_run` (both in `SimulationConfig` in `config/settings.py`).
+- Then a **new** CSV file is opened, the RNG is re-seeded with the same base seed (fair comparison across presets), and a fresh population starts with the next preset.
 
-Multiple rules can apply in one frame when both `if g == 50` and earlier `elif` chains match different blocks; see the source for exact combinations.
+To use your own list, pass `run_presets=` into `EvolutionGame(...)`.
 
 ---
 
@@ -171,7 +159,7 @@ Either:
 - **All cars** are dead or have **finished** the lap, or  
 - **`max_frames_per_generation`** frames have elapsed (default `600` at 60 FPS ≈ 10 s).
 
-Then: optional schedule → CSV append → `evolve()` → frame counter reset.
+Then: CSV append → if the run has converged, switch preset (new CSV + new population) **else** `evolve()` → frame counter reset.
 
 ---
 
@@ -190,7 +178,7 @@ project root/
     core/                 # Car, NeuralNetwork, Population, RNG
     track/                # geometry.py, layout.py (RaceTrack)
     rendering/            # track_background.py, ui.py (dashboard)
-    evolution/            # logger.py, schedule.py
+    evolution/            # logger.py, run_params.py
     io/                   # paths.py (PROJECT_ROOT, LOGS_DIR, …)
     app/                  # game.py (EvolutionGame loop)
 ```
@@ -203,7 +191,7 @@ project root/
 
 - **`LOGS_DIR`** – `PROJECT_ROOT / "logs"`. Created on demand via `ensure_logs_dir()`.
 
-- **One CSV per game session** – `evolution_log_YYYYMMDD_HHMMSS.csv` from `evolution_log_path()`.
+- **One CSV per parameter run** – `evolution_log_YYYYMMDD_HHMMSS_runNN.csv` from `evolution_run_log_path(session_timestamp, run_index)` (shared timestamp for all runs in one window session). `evolution_log_path()` remains available for single-file logging if you build a custom entry point.
 
 - **One row per generation** with columns:
 
@@ -266,3 +254,10 @@ No separate Sphinx site is required for development; IDEs and `help()` can consu
 ## License
 
 Educational project: clone, study, adapt, and extend for your own experiments with neural networks and evolutionary algorithms.
+
+
+## Authors
+- [Ankier José](https://github.com/AnkierJ)
+- [Célio Felipe](https://github.com/DIGAOZX)
+- [Gabriel Gonzaga](https://github.com/GabrielFGonzaga)
+- [Pedro Henrique](https://github.com/pedrohnq)

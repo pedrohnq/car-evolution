@@ -19,23 +19,39 @@ class Population:
     crossover and mutation on flat DNA, then replace the population.
     """
 
-    def __init__(self, size: int, start_pos: tuple[float, float], start_angle: float) -> None:
+    def __init__(
+        self,
+        size: int,
+        start_pos: tuple[float, float],
+        start_angle: float,
+        *,
+        mutation_rate: float = 0.05,
+        crossover_rate: float = 0.80,
+        elitism: int = 2,
+        selection_method: str = "Tournament",
+        crossover_method: str = "Uniform",
+    ) -> None:
         """
         Args:
             size: Number of cars.
             start_pos: ``(x, y)`` spawn position.
             start_angle: Spawn heading in radians.
+            mutation_rate: Fixed for this population instance unless replaced by a new run.
+            crossover_rate: Fixed for this population instance unless replaced by a new run.
+            elitism: Number of elite clones per generation.
+            selection_method: ``\"Tournament\"`` or ``\"Roulette\"``.
+            crossover_method: ``\"Uniform\"`` or ``\"One-Point\"``.
         """
         self.size = size
         self.start_pos = start_pos
         self.start_angle = start_angle
         self.generation = 1
 
-        self.mutation_rate = 0.05
-        self.crossover_rate = 0.80
-        self.elitism = 2
-        self.selection_method = "Tournament"
-        self.crossover_method = "Uniform"
+        self.mutation_rate = mutation_rate
+        self.crossover_rate = crossover_rate
+        self.elitism = elitism
+        self.selection_method = selection_method
+        self.crossover_method = crossover_method
 
         self.cars: list[Car] = [
             Car(start_pos[0], start_pos[1], start_angle) for _ in range(size)
